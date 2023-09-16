@@ -1,0 +1,210 @@
+﻿@{
+    ViewData["Title"] = "Index";
+}
+
+<div>
+    <div class="container" style="display: flex;">
+        <div class="column" style="flex: 1; margin: 10px;">
+            <div>
+                <canvas id="myChart" ></canvas>
+            </div>
+        </div>
+    <div class="column">
+        <table id="chartTable" style="margin: 0 auto;">
+            <tr style="text-align: center;">   
+                <th style="display: none;">ID</th>
+                <th>Date</th>
+                <th>Value1</th>
+                <th>Value2</th>
+            </tr>
+            @foreach (var item in ViewBag.ChartData)
+            {
+                <tr>
+                    <td style="text-align: center;display: none;"><input type="text" name="ID" value="@item.ID" /></td>       
+                    <td style="text-align: center;"><input type="text" name="Date1" value="@item.Date1" /></td>
+                    <td style="text-align: center;"><input type="text" name="Value1" value="@item.Value1" /></td>
+                    <td style="text-align: center;"><input type="text" name="Value2" value="@item.Value2" /></td>
+                </tr>
+            }
+        </table>
+
+        <button id = "insertButton()" class="btn btn-info m-2 float-end cener"onclick="insertRow()">Insert</button>
+        
+        <button class="btn btn-info m-2 float-end center" onclick="chooseOperation()">Update</button>
+    </div>
+    <div class="column">
+        <button class="btn btn-secondary m-2 float-end center" onclick="LogOut()">LogOut</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    var isRowInserted = false; // Flag to track if a row has been inserted
+    var isUpdated = false;     // Flag to track if a row has been changed
+    //start switch function
+    function LogOut(){
+            localStorage.removeItem('accessToken');
+            window.localStorage.clear();
+            window.location.href = "/";
+            window.history.replaceState({}, document.title, '/');
+    }
+    function chooseOperation(){
+        getData();
+        if(isRowInserted){
+            insertRecord();
+        }else if(!isRowInserted){
+             updateRecord();
+        }
+        isUpdated=false;
+        isRowInserted=false;
+    }
+    //End switch function
+
+    // start insertRow function
+    function insertRow() {
+        // Create a new row with empty input fields
+        if(!isRowInserted){
+            var newRow = `
+            <tr>
+                <td style="text-align: center; display: none;"><input type="text" name="id" /></td>       
+                <td style="text-align: center;"><input type="text" name="Date1" /></td>
+                <td style="text-align: center;"><input type="text" name="Value1" /></td>
+                <td style="text-align: center;"><input type="text" name="Value2" /></td>
+            </tr>
+        `;   
+        }
+        isRowInserted=true;
+        isUpdated=true;
+        // Append the new row to the table
+        $('#chartTable tbody').append(newRow);
+    }
+        // End insertRow function
+
+    // start Update Record function
+
+    function updateRecord() {
+    var rows = document.getElementsByTagName("tr");
+    var data = [];
+    for (var i = 1; i < rows.length; i++) {
+        var row = rows[i];
+        var inputs = row.getElementsByTagName("input");
+        var item = {
+            ID:inputs[0].value,
+            Date1: inputs[1].value,
+            Value1: inputs[2].value,
+            Value2: inputs[3].value
+        };
+        data.push(item);
+    }
+    // Send the data to the server using AJAX
+    $.ajax({
+        url: '/api/Register/EditValues',
+        type: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (response) {
+            // Handle the response from the server
+            if (response.statusCode === 200) {
+                console.log("Values updated successfully");
+                isUpdated=true;
+                // Fetch updated data and update the chart
+                getData();
+                
+            } else {
+                console.log("Error while updating values: " + response.statusMessage);
+            }
+        },
+        error: function () {
+            console.log("An error occurred while updating values");
+        }
+    });
+}
+    // End Update Record function
+
+        // Start Insert Record function
+        function insertRecord(){
+        // Get the last row in the table
+        var lastRow = $('#chartTable tbody tr:last');
+        
+        // Collect data from the last row
+        var date1 = lastRow.find('input[name="Date1"]').val();
+        var value1 = lastRow.find('input[name="Value1"]').val();
+        var value2 = lastRow.find('input[name="Value2"]').val();
+        
+        // Send the data to the server using AJAX for database update
+        $.ajax({
+            url: '/api/Register/AddValues',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                Date1: date1,
+                Value1: value1,
+                Value2: value2
+            }),
+            success: function (response) {
+                if (response.statusCode === 200) {
+                    console.log("Row updated successfully");
+                    
+                    getData();
+                } else {
+                    console.log("Error while updating row: " + response.statusMessage);
+                }
+            },
+            error: function () {
+                console.log("An error occurred while updating row");
+            }
+        });
+        }
+        // End Insert Record function
+
+    const ctx = document.getElementById('myChart');
+    const myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(Json.Serialize(ViewBag.Labels)),
+            datasets: [
+                {
+                    label: 'Value1',
+                    data: @Html.Raw(Json.Serialize(ViewBag.Values1)),
+                    borderWidth: 1,
+                    order: 1
+                },
+                {
+                    label: 'Value2',
+                    data: @Html.Raw(Json.Serialize(ViewBag.Values2)),
+                    type: 'line',
+                    order: 0
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    function getData() {
+        // AJAX request to fetch updated data
+        $.ajax({
+            type: 'GET',
+            dataType: 'JSON',
+            url: '/api/Register/GetChartData',
+            success: function (result) {
+
+                // Update chart data and labels
+                myChart.data.labels = result.labels;
+                myChart.data.datasets[0].data = result.values1;
+                myChart.data.datasets[1].data = result.values2;
+                myChart.update();
+            },
+            error: function (result) {
+                console.log("Error message");
+                console.log(result);
+            }
+        });
+    }
+    </script>

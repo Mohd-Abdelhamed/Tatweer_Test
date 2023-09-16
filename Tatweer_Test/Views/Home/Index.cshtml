@@ -1,0 +1,211 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@model Tatweer_Test.Models.Users;
+
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://unpkg.com/vue@3"></script>
+    <script src="https://unpkg.com/vue-router@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+</head>
+<body>
+<div>
+
+<section class="vh-100">
+    <div class="container-fluid h-custom">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-md-9 col-lg-6 col-xl-5">
+                <img src="https://tse1.mm.bing.net/th?id=OIP.tdo4EcvgciqzblC6zqJe1gHaFK&pid=Api&P=0&h=180"
+                    class="img-fluid" alt="Sample image"/>
+            </div>
+            <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
+                    <div id="message2"style="display: none;">
+                    <div class="alert alert-danger">
+                        <strong id="FailedMessage">Invalid Username Or Password!</strong>
+                    </div>
+                </div>
+                <form id='loginForm'>
+                    <div class="divider d-flex align-items-center my-4">
+                        <p class="text-center fw-bold mx-3 mb-0">Sign In</p>
+                    </div>
+                    <!-- Email input -->
+                    <div class="form-outline mb-4">
+                        <input type="email" id="logEmail" name="logEmail" class="form-control form-control-lg"
+                            placeholder="Enter a valid email address" />
+                        <label class="form-label" for="logemail">Email address</label>
+                    </div>
+                    <!-- Password input -->
+                    <div class="form-outline mb-3">
+                        <input type="password" id="logPassword" name="logPassword" class="form-control form-control-lg"
+                            placeholder="Enter password" />
+                        <label class="form-label" for="logPassword">Password</label>
+                    </div>
+                    <div class="text-center text-lg-start mt-4 pt-2">
+                        <button type="button" class="btn btn-primary btn-lg"
+                                style="padding-left: 2.5rem; padding-right: 2.5rem;" onclick="Login()">
+                            Login
+                        </button>
+                        <p class="small fw-bold mt-2 pt-1 mb-0">Don't have an account? <a 
+                            class="btn btn-outline-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#exampleModall"
+                            onclick="openRegister()">Register</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="exampleModall" tabindex="-1"
+    aria-labelledby="exampleModallLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModallLabel">Registration Form</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="message1">
+                    <div class="alert alert-success">
+                        <strong id="successMessage">Success Register!</strong>
+                    </div>
+                </div>
+
+                <div class="text-danger" id="text-danger">
+                    @Html.ValidationMessageFor(model => model.Username, "", new { @class = "text-danger" })
+                    @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
+                    @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+                    @Html.ValidationMessageFor(model => model.Mobile, "", new { @class = "text-danger" })
+                </div>
+                <div class="d-flex flex-row bd-highlight mb-3">
+                    @using (Html.BeginForm("Registration", "Register", FormMethod.Post, new { id = "Registration" }))
+                    {
+                        @Html.ValidationSummary(true)
+                        <div>
+                            @Html.LabelFor(m => m.Username)
+                            @Html.TextBoxFor(m => m.Username)
+                            @Html.ValidationMessageFor(m => m.Username)
+                        </div>
+                        <br>
+                        <br>
+                        <div>
+                            @Html.LabelFor(m => m.Email)
+                            @Html.TextBoxFor(m => m.Email)
+                            @Html.ValidationMessageFor(m => m.Email)
+                        </div>
+                        <br>
+                        <br>
+                        <div>
+                            @Html.LabelFor(m => m.Password)
+                            @Html.TextBoxFor(m => m.Password)
+                            @Html.ValidationMessageFor(m => m.Password)
+                        </div>
+                        <br>
+                        <br>
+                        <div>
+                            @Html.LabelFor(m => m.Mobile)
+                            @Html.TextBoxFor(m => m.Mobile)
+                            @Html.ValidationMessageFor(m => m.Mobile)
+                        </div>
+                        <div>
+                            <button type="button" onclick="Register()">Register</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openRegister() {
+        $('#message1').hide();
+    }
+
+function Login() {
+    var obj = {
+        Email: $('#logEmail').val(),
+        Password: $('#logPassword').val()
+    };
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'JSON',
+        url: '/api/Register/Login',
+        data: JSON.stringify(obj),
+        contentType: 'application/json; charset=utf-8',
+        success: function (result) {
+            console.log(result);
+            if (result.statusCode === 200) {
+                var accessToken = result.accessToken;
+                localStorage.setItem('accessToken', accessToken);
+                window.location.href = "/Home/Dashboard";
+                window.history.replaceState({}, document.title, '/Home/Dashboard');
+            } else {
+                $("#message2").show();
+                $('#loginForm')[0].reset();
+            }
+        },
+        error: function (xhr, status, error) {
+            console.log(xhr.responseText);
+            $("#message2").show();
+
+        }
+    });
+
+    }
+    
+    function Register() {
+        console.log("Registration Click");
+              console.log($('#Username').val());
+            console.log($('#Email').val());
+            console.log($('#Password').val());
+            console.log($('#Mobile').val());
+                                
+        // Initialization
+        $('#nameError, #emailError, #passwordError, #confirmPasswordError, #mobileError').text('');
+
+        // Form Data
+        var obj = {
+            Username: $('#Username').val(),
+            Password: $('#Password').val(),
+            Email: $('#Email').val(),
+            Mobile: $('#Mobile').val()
+        };
+
+        if (Object.values(obj).some(val => val === "")) {
+            $('#message1').hide();
+            $('#message2').show().text("All fields are mandatory.");
+            return false;
+        }
+
+        $.ajax({
+            type: 'POST',
+            dataType: 'JSON',
+            url: '/api/Register/Registration',
+            data: JSON.stringify(obj),
+            contentType: 'application/json; charset=utf-8',
+            success: function (result) {
+                if (result.statusCode === 200) {
+                    $('#message1').show();
+                    $('#Registration')[0].reset();
+                } else {
+                    $('#message2').show().text(result.statusMessage);
+                }
+            },
+            error: function (result) {
+                console.log(result);
+                $('#message2').show().text("An unexpected error occurred.");
+            }
+        });
+    }
+</script>
+</body>
+</html>
